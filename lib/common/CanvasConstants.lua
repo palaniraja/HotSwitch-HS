@@ -3,7 +3,7 @@ local CanvasConstants = {
 
     PANEL_W = 520,
 
-    PADDING = 15,
+    PADDING = 5,
     KEY_W = 24,
     KEY_LEFT_PADDING = 15,
     ROW_HEIGHT = 28,
