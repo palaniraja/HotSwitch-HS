@@ -35,6 +35,8 @@ BaseCanvasView.new = function(windowModel, settingModel, keyStatusModel)
         local orderedWindows = self.windowModel:getCachedOrderedWindowsOrFetch()
         -- t:diff("getCachedOrderedWindowsOrFetch")
 
+        self:prepareRows(orderedWindows)
+        self:fitPanelWidth(orderedWindows)
         self:showRectangle(orderedWindows)
         -- t:diff("showRectangle") -- sometimes, slow
         self:showWindowInfo(orderedWindows)
@@ -50,11 +52,11 @@ BaseCanvasView.new = function(windowModel, settingModel, keyStatusModel)
 
     obj.showRectangle = function(self, orderedWindows)
         -- local t = TimeChecker.new()
+        local frame = FrameCulculator.calcBaseCanvasFrame(orderedWindows)
         if self.baseCanvas == nil then
-            local frame = FrameCulculator.calcBaseCanvasFrame(orderedWindows)
-            -- t:diff("calcBaseCanvasFrame")
             self.baseCanvas = canvas.new(frame)
-            -- t:diff("new")
+        else
+            self.baseCanvas:frame(frame) -- width may have grown since the canvas was created
         end
         -- t:diff("canvas new")
 
@@ -136,8 +138,8 @@ BaseCanvasView.new = function(windowModel, settingModel, keyStatusModel)
         })
     end
 
-    obj.showWindowInfo = function(self, orderedWindows)
-        -- local t = TimeChecker.new()
+    -- Per-row data needed both to size the panel and to draw it.
+    obj.prepareRows = function(self, orderedWindows)
         local appWindowCount = {}
         for _, w in ipairs(self.windowModel.allOrderedWindows or orderedWindows) do
             local bundleID = getBundleIDOrFallback(w:application())
@@ -150,6 +152,29 @@ BaseCanvasView.new = function(windowModel, settingModel, keyStatusModel)
             self.keyStatusOfWindow[keyStatus.windowId] = keyStatus
         end
 
+        self.rowNames, self.rowTags = {}, {}
+        for i, window in ipairs(orderedWindows) do
+            self.rowNames[i] = self:rowName(window, appWindowCount)
+            self.rowTags[i] = self:rowTag(window)
+        end
+    end
+
+    -- Grow the panel to fit the longest title: configured width is the minimum,
+    -- 70% of the screen the maximum. Never shrinks while open, so filtering doesn't jitter.
+    obj.fitPanelWidth = function(self, orderedWindows)
+        local font = { font = ".AppleSystemUIFont", size = CanvasConstants.FONT_SIZE }
+        local fixedW = CanvasConstants.KEY_W + CanvasConstants.APP_ICON_W + CanvasConstants.PADDING * 6 + 10
+        local needed = 0
+        for i = 1, #orderedWindows do
+            local textW = hs.drawing.getTextDrawingSize(self.rowNames[i], font).w
+            needed = math.max(needed, fixedW + textW + (self.rowTags[i] and TAG_W or 0))
+        end
+        local w = math.max(CanvasConstants.getMinPanelW(), PanelState.panelW or 0, math.ceil(needed))
+        PanelState.panelW = math.min(w, math.max(CanvasConstants.getMinPanelW(), FrameCulculator.maxPanelW()))
+    end
+
+    obj.showWindowInfo = function(self, orderedWindows)
+        -- local t = TimeChecker.new()
         self:showHeader(orderedWindows)
 
         for i = 1, #orderedWindows do
@@ -161,7 +186,7 @@ BaseCanvasView.new = function(windowModel, settingModel, keyStatusModel)
             -- t:diff("showEachKeyText")
             self:showEachAppIcon(i, window)
             -- t:diff("showEachAppIcon")
-            self:showEachWindowTitle(i, window, appWindowCount)
+            self:showEachWindowTitle(i, window)
             -- t:diff("showEachWindowTitle")
         end
 
@@ -282,8 +307,7 @@ BaseCanvasView.new = function(windowModel, settingModel, keyStatusModel)
         end
     end
 
-    obj.showEachWindowTitle = function(self, i, window, appWindowCount)
-        -- local t = TimeChecker.new()
+    obj.rowName = function(self, window, appWindowCount)
         local windowName
         local bundleID = getBundleIDOrFallback(window:application())
         local keyStatus = self.keyStatusOfWindow[window:id()]
@@ -312,8 +336,12 @@ BaseCanvasView.new = function(windowModel, settingModel, keyStatusModel)
                 windowName = window:application():name()
             end
         end
+        return windowName
+    end
 
-        local tag = self:rowTag(window)
+    obj.showEachWindowTitle = function(self, i, window)
+        local windowName = self.rowNames[i]
+        local tag = self.rowTags[i]
         local titleW = CanvasConstants.getEffectivePanelW() - CanvasConstants.KEY_W - CanvasConstants.APP_ICON_W -
             CanvasConstants.PADDING * 6
         if tag then

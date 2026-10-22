@@ -50,7 +50,14 @@ function CanvasConstants.setCustomAppTitle(bundleID, title)
     CanvasConstants.customAppTitles[bundleID] = title
 end
 
+-- Width actually used while the panel is open (grown to fit titles, see BaseCanvasView).
 function CanvasConstants.getEffectivePanelW()
+    if PanelState.panelW then return PanelState.panelW end
+    return CanvasConstants.getMinPanelW()
+end
+
+-- Configured width; the panel never gets narrower than this.
+function CanvasConstants.getMinPanelW()
     if CanvasConstants.alwaysShowAppName then
         return CanvasConstants.PANEL_W_APP_NAME_ONLY
     else

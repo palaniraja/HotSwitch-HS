@@ -28,13 +28,16 @@ SelectedRowCanvasView.new = function(windowModel, position)
         local orderedWindows = self.windowModel:getCachedOrderedWindowsOrFetch()
         local baseCanvasFrame = FrameCulculator.calcBaseCanvasFrame(orderedWindows)
 
+        local frame = {
+            x = baseCanvasFrame.x,
+            y = baseCanvasFrame.y,
+            h = baseCanvasFrame.h,
+            w = baseCanvasFrame.w - CanvasConstants.PADDING
+        }
         if self.selectedRowCanvas == nil then
-            self.selectedRowCanvas = canvas.new {
-                x = baseCanvasFrame.x,
-                y = baseCanvasFrame.y,
-                h = baseCanvasFrame.h,
-                w = baseCanvasFrame.w - CanvasConstants.PADDING
-            }
+            self.selectedRowCanvas = canvas.new(frame)
+        else
+            self.selectedRowCanvas:frame(frame)
         end
     end
 

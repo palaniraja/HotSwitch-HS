@@ -6,6 +6,7 @@ local PanelState = {
     query = "",
     haystacks = {},
     anchorY = nil,
+    panelW = nil,
 }
 
 function PanelState.reset()
@@ -15,6 +16,7 @@ function PanelState.reset()
     PanelState.query = ""
     PanelState.haystacks = {}
     PanelState.anchorY = nil
+    PanelState.panelW = nil
 end
 
 function PanelState.hasHeader()
