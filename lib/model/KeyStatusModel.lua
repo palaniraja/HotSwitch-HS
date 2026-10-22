@@ -4,8 +4,10 @@ local KeyConstants = require("hotswitch-hs/lib/common/KeyConstants")
 local Options = require("hotswitch-hs/lib/common/Options")
 local PanelState = require("hotswitch-hs/lib/model/PanelState")
 
-local WINDOW_KEYS_IN_GROUP = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0",
-    "a", "s", "d", "f", "j", "k", "l", "e", "w", "c", "m", "p", "g", "h", "i", "o", "r", "t", "u", "n", "v", "b", "q", "x", "y", "z" }
+local WINDOW_KEYS_IN_GROUP = { "a", "s", "d", "f", "j", "k", "l", "g", "h",
+    "q", "w", "e", "r", "u", "i", "o", "p", "t", "y",
+    "z", "x", "c", "v", "m", "n", "b",
+    "1", "2", "3", "4", "5", "6", "7", "8", "9", "0" }
 
 --[[
 data format:

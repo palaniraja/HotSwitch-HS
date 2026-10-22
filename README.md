@@ -235,9 +235,10 @@ By default, only windows in the current space are shown. This shows windows from
 ```lua
 hotswitchHs.setOptions({
     search = true,       -- "/" starts type-to-filter (app name + window title, any word order)
-    groupByApp = true,   -- one row per app; its key opens that app's windows (1, 2, 3...)
+    groupByApp = true,   -- one row per app; its key opens that app's windows (a, s, d, f...)
     readableRows = true, -- key badges, dimmed minimized/hidden windows, screen tag
     maxRows = 15,        -- cap the number of rows shown
+    showMinimized = true, -- also list minimized windows and windows of hidden apps (restored on focus)
 })
 ```
 

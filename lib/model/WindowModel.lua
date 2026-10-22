@@ -67,6 +67,12 @@ WindowModel.new = function()
     obj.ensureSubscribed = function(self)
         if self.windowFilter ~= nil then return end
         self.windowFilter = self.useAllSpaces and hs.window.filter.default or hs.window.filter.defaultCurrentSpace
+        if Options.showMinimized then
+            -- The default filters only allow visible windows ({visible=true}), which drops
+            -- minimized windows and hidden apps. Copy keeps their app rules; the app scan is
+            -- shared between filters, so this costs no extra startup time.
+            self.windowFilter = hs.window.filter.copy(self.windowFilter):setDefaultFilter({})
+        end
         -- Workaround:
         -- This is necessaary to make it faster to get all windows.
         -- If the `subscribe` is not set, the getting windows is slow.
@@ -79,7 +85,7 @@ WindowModel.new = function()
 
     obj.enableAllSpaceWindows = function(self)
         self.useAllSpaces = true
-        if self.windowFilter == nil or self.windowFilter == hs.window.filter.default then return end
+        if self.windowFilter == nil then return end
         self.windowFilter:unsubscribe(SUBSCRIPTION_TARGET, self.subscriptionCallback)
         self.windowFilter = nil
         self:ensureSubscribed()
@@ -274,6 +280,13 @@ WindowModel.new = function()
 
     -- TODO: window:focus() don't work correctly, when a application has 2 windows and each windows are on different screen.
     obj.focusWindow = function(self, targetWindow)
+        if targetWindow:isMinimized() then
+            targetWindow:unminimize()
+        end
+        if targetWindow:application():isHidden() then
+            targetWindow:application():unhide()
+        end
+
         -- Finder: use raise() + activate(true) instead of focus(). focus() calls becomeMain()
         -- internally, which makes Finder jump to the first tab of the window's tab group
         -- instead of preserving the tab the user actually selected.
