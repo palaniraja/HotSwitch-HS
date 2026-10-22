@@ -7,6 +7,7 @@ local PanelState = {
     haystacks = {},
     anchorY = nil,
     panelW = nil,
+    centerOn = nil, -- frame to center the panel on (active window); nil = screen center
 }
 
 function PanelState.reset()
@@ -17,6 +18,7 @@ function PanelState.reset()
     PanelState.haystacks = {}
     PanelState.anchorY = nil
     PanelState.panelW = nil
+    PanelState.centerOn = nil
 end
 
 function PanelState.hasHeader()

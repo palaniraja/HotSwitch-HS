@@ -10,6 +10,7 @@ local PanelLayoutView = require("hotswitch-hs/lib/view/PanelLayoutView")
 local HotkeyController = require("hotswitch-hs/lib/controller/HotkeyController")
 local FrameCulculator = require("hotswitch-hs/lib/common/FrameCulculator")
 local CanvasConstants = require("hotswitch-hs/lib/common/CanvasConstants")
+local PanelState = require("hotswitch-hs/lib/model/PanelState")
 
 local SHOW_PANEL_DELAY = 0.05
 
@@ -69,6 +70,16 @@ MainController.new = function()
         else
             self:open()
         end
+    end
+
+    -- Same as togglePanel, but the panel is centered on the active window
+    -- (falls back to screen center when there is no window).
+    obj.togglePanelAtActiveWindow = function(self)
+        if not self.panelLayoutView.isOpen then
+            local win = hs.window.frontmostWindow()
+            PanelState.centerOn = win and win:frame() or nil
+        end
+        self:togglePanel()
     end
 
     local function cycleRowHelper(self, selectFn)

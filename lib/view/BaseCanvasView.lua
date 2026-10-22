@@ -159,8 +159,8 @@ BaseCanvasView.new = function(windowModel, settingModel, keyStatusModel)
         end
     end
 
-    -- Grow the panel to fit the longest title: configured width is the minimum,
-    -- 70% of the screen the maximum. Never shrinks while open, so filtering doesn't jitter.
+    -- Grow the panel to fit the longest title: configured width is the minimum, the maximum is
+    -- 70% of the screen (or the window's width when opened on a window). Never shrinks while open.
     obj.fitPanelWidth = function(self, orderedWindows)
         local font = { font = ".AppleSystemUIFont", size = CanvasConstants.FONT_SIZE }
         local fixedW = CanvasConstants.KEY_W + CanvasConstants.APP_ICON_W + CanvasConstants.PADDING * 6 + 10

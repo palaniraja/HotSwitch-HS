@@ -243,6 +243,14 @@ hotswitchHs.setOptions({
 
 All options are off by default. In search: type to filter, `Return` focuses, `Delete` erases, `Esc` exits search. In an app group: `Esc`/`Delete` goes back.
 
+## Open panel centered on the active window
+
+```lua
+hs.hotkey.bind({"command", "option"}, ".", hotswitchHs.togglePanelAtActiveWindow)
+```
+
+Same panel, centered on the focused window instead of the screen, and no wider than that window (kept on-screen; falls back to screen center when no window is focused).
+
 ## Additional symbol keys
 
 ```lua
