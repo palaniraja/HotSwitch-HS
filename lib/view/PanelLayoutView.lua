@@ -6,7 +6,7 @@ local View = require("hotswitch-hs/lib/view/View")
 local BaseCanvasView = require("hotswitch-hs/lib/view/BaseCanvasView")
 local SelectedRowCanvasView = require("hotswitch-hs/lib/view/SelectedRowCanvasView")
 
-local defaultRowPosition = 2
+local PanelState = require("hotswitch-hs/lib/model/PanelState")
 
 local PanelLayoutView = {}
 PanelLayoutView.new = function(windowModel, settingModel, keyStatusModel)
@@ -14,13 +14,14 @@ PanelLayoutView.new = function(windowModel, settingModel, keyStatusModel)
 
     obj.isOpen = false
     obj.baseCanvasView = BaseCanvasView.new(windowModel, settingModel, keyStatusModel)
-    obj.selectedRowCanvasView = SelectedRowCanvasView.new(windowModel, defaultRowPosition)
+    obj.selectedRowCanvasView = SelectedRowCanvasView.new(windowModel, 2)
+    obj.windowModel = windowModel
     obj.settingModel = settingModel
 
     obj.show = function(self)
         if self.isOpen == false then
             self.isOpen = true
-            self.selectedRowCanvasView.position = defaultRowPosition
+            self.selectedRowCanvasView.position = self.windowModel:defaultRowPosition()
         end
 
         -- local t = TimeChecker.new()
@@ -38,6 +39,17 @@ PanelLayoutView.new = function(windowModel, settingModel, keyStatusModel)
 
         self.baseCanvasView:hide()
         self.selectedRowCanvasView:hide()
+        PanelState.reset()
+    end
+
+    -- Redraw after the row set changed (search query / app group). Canvases are rebuilt
+    -- because their height depends on the row count.
+    obj.rerender = function(self, position)
+        self.baseCanvasView:hide()
+        self.selectedRowCanvasView:hide()
+        local rows = #self.windowModel:getCachedOrderedWindowsOrFetch()
+        self.selectedRowCanvasView.position = math.max(1, math.min(position or 1, rows))
+        self:show()
     end
 
     obj.getSelectedRowPosition = function(self)
@@ -45,7 +57,7 @@ PanelLayoutView.new = function(windowModel, settingModel, keyStatusModel)
     end
 
     obj.resetSelectedRowPosition = function(self)
-        self.selectedRowCanvasView.position = defaultRowPosition
+        self.selectedRowCanvasView.position = self.windowModel:defaultRowPosition()
     end
     
     obj.selectNextRow = function(self, windowModel)

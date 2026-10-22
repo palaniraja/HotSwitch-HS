@@ -49,7 +49,7 @@ SelectedRowCanvasView.new = function(windowModel, position)
             },
             frame = {
                 x = CanvasConstants.PADDING * 2,
-                y = (self.position - 1) * CanvasConstants.ROW_HEIGHT + CanvasConstants.PADDING * 2,
+                y = CanvasConstants.rowY(self.position),
                 h = CanvasConstants.ROW_HEIGHT,
                 w = CanvasConstants.getEffectivePanelW() - CanvasConstants.PADDING * 4
             },
@@ -70,7 +70,7 @@ SelectedRowCanvasView.new = function(windowModel, position)
             },
             frame = {
                 x = CanvasConstants.PADDING * 2,
-                y = (self.position - 1) * CanvasConstants.ROW_HEIGHT + CanvasConstants.PADDING * 2,
+                y = CanvasConstants.rowY(self.position),
                 h = CanvasConstants.ROW_HEIGHT,
                 w = CanvasConstants.getEffectivePanelW() - CanvasConstants.PADDING * 4
             },

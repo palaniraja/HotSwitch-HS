@@ -1,6 +1,8 @@
 local Debugger = require("hotswitch-hs/lib/common/Debugger")
 local TimeChecker = require("hotswitch-hs/lib/common/TimeChecker")
 local Model = require("hotswitch-hs/lib/model/Model")
+local Options = require("hotswitch-hs/lib/common/Options")
+local PanelState = require("hotswitch-hs/lib/model/PanelState")
 
 -- local SUBSCRIPTION_TARGET = { hs.window.filter.windowAllowed, hs.window.filter.windowCreated, hs.window.filter.windowsChanged, hs.window.filter.windowTitleChanged }
 -- local SUBSCRIPTION_TARGET = { hs.window.filter.hasWindow }
@@ -9,10 +11,49 @@ local SUBSCRIPTION_TARGET = { hs.window.filter.windowVisible }
 local FINDER_BUNDLE_ID = "com.apple.finder"
 
 local WindowModel = {}
+
+WindowModel.bundleKey = function(window)
+    local app = window:application()
+    return app:bundleID() or ("unknown:" .. app:name())
+end
+
+local function groupByApp(windows)
+    local order, groups = {}, {}
+    for _, w in ipairs(windows) do
+        local b = WindowModel.bundleKey(w)
+        if not groups[b] then
+            groups[b] = {}
+            table.insert(order, b)
+        end
+        table.insert(groups[b], w)
+    end
+    local out = {}
+    for _, b in ipairs(order) do
+        for _, w in ipairs(groups[b]) do table.insert(out, w) end
+    end
+    return out
+end
+
+local function matchesQuery(window, query)
+    local id = window:id()
+    local haystack = PanelState.haystacks[id]
+    if haystack == nil then
+        haystack = (window:application():name() .. " " .. window:title()):lower()
+        PanelState.haystacks[id] = haystack
+    end
+    for token in query:lower():gmatch("%S+") do
+        if not haystack:find(token, 1, true) then return false end
+    end
+    return true
+end
+
 WindowModel.new = function()
     local obj = Model.new()
 
-    obj.cachedOrderedWindows = nil
+    obj.bundleKey = WindowModel.bundleKey
+    obj.cachedOrderedWindows = nil -- rows shown in the panel (after grouping/search/maxRows)
+    obj.allOrderedWindows = nil    -- all windows, most-recently-focused first
+    obj.groupedWindows = nil       -- all windows after grouping, before search/maxRows
     obj.previousWindow = nil
 
     obj.windowFilter = nil
@@ -46,7 +87,7 @@ WindowModel.new = function()
 
     obj.getCachedOrderedWindowsOrFetch = function(self)
         if self.cachedOrderedWindows == nil then
-            return self:refreshOrderedWindows()
+            self:refreshOrderedWindows()
         end
         return self.cachedOrderedWindows
     end
@@ -90,8 +131,50 @@ WindowModel.new = function()
         orderedWindows = self.removeInvalidWindows(orderedWindows)
         orderedWindows = self:removeUnusableFinderWindows(orderedWindows)
 
-        self.cachedOrderedWindows = orderedWindows
+        self.allOrderedWindows = orderedWindows
+        self:applyView()
         return orderedWindows
+    end
+
+    -- Rebuilds the displayed rows from allOrderedWindows using the current options/panel state.
+    obj.applyView = function(self)
+        local windows = self.allOrderedWindows or {}
+        if Options.groupByApp then
+            windows = groupByApp(windows)
+        end
+        self.groupedWindows = windows
+
+        -- groupByApp top level (no search): one row per app, its most recent window.
+        local onePerApp = Options.groupByApp and PanelState.groupApp == nil and not PanelState.searchActive
+        local seenApp = {}
+        local filtered = {}
+        for _, w in ipairs(windows) do
+            local app = WindowModel.bundleKey(w)
+            if (PanelState.groupApp == nil or app == PanelState.groupApp)
+                and (not PanelState.searchActive or matchesQuery(w, PanelState.query))
+                and not (onePerApp and seenApp[app]) then
+                seenApp[app] = true
+                table.insert(filtered, w)
+            end
+            if Options.maxRows and #filtered >= Options.maxRows then break end
+        end
+        self.cachedOrderedWindows = filtered
+    end
+
+    -- Row of the previously focused window (the quick-switch target), clamped to the list.
+    obj.defaultRowPosition = function(self)
+        local target = self.allOrderedWindows and self.allOrderedWindows[2]
+        local rows = self.cachedOrderedWindows or {}
+        if target then
+            for i, w in ipairs(rows) do
+                if w:id() == target:id() then return i end
+            end
+            local targetApp = WindowModel.bundleKey(target)
+            for i, w in ipairs(rows) do
+                if i > 1 and WindowModel.bundleKey(w) == targetApp then return i end
+            end
+        end
+        return math.max(1, math.min(2, #rows))
     end
 
     obj.removeInvalidWindows = function(orderedWindows)
@@ -240,7 +323,7 @@ WindowModel.new = function()
                 return
             end
 
-            local cachedWindows = self:getCachedOrderedWindowsOrFetch()
+            local cachedWindows = self.allOrderedWindows or self:getCachedOrderedWindowsOrFetch()
             local previousWindow = cachedWindows[1]
 
             if previousWindow:application():pid() == targetAppliation:pid() then

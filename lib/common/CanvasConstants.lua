@@ -1,3 +1,5 @@
+local PanelState = require("hotswitch-hs/lib/model/PanelState")
+
 local CanvasConstants = {
     FONT_SIZE = 18,
 
@@ -54,6 +56,15 @@ function CanvasConstants.getEffectivePanelW()
     else
         return CanvasConstants.PANEL_W
     end
+end
+
+function CanvasConstants.headerRows()
+    return PanelState.hasHeader() and 1 or 0
+end
+
+-- y of row i (1-based), shifted down when the search/group header row is shown
+function CanvasConstants.rowY(i)
+    return (i - 1 + CanvasConstants.headerRows()) * CanvasConstants.ROW_HEIGHT + CanvasConstants.PADDING * 2
 end
 
 -- for debug

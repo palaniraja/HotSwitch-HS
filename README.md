@@ -230,6 +230,19 @@ hotswitchHs.enableAllSpaceWindows()
 
 By default, only windows in the current space are shown. This shows windows from all spaces.
 
+## Panel options
+
+```lua
+hotswitchHs.setOptions({
+    search = true,       -- "/" starts type-to-filter (app name + window title, any word order)
+    groupByApp = true,   -- one row per app; its key opens that app's windows (1, 2, 3...)
+    readableRows = true, -- key badges, dimmed minimized/hidden windows, screen tag
+    maxRows = 15,        -- cap the number of rows shown
+})
+```
+
+All options are off by default. In search: type to filter, `Return` focuses, `Delete` erases, `Esc` exits search. In an app group: `Esc`/`Delete` goes back.
+
 ## Additional symbol keys
 
 ```lua

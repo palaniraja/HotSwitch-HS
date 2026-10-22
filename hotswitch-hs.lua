@@ -1,6 +1,7 @@
 local Debugger = require("hotswitch-hs/lib/common/Debugger")
 local MainController = require("hotswitch-hs/lib/controller/MainController")
 local PreferenceModel = require("hotswitch-hs/lib/model/PreferenceModel")
+local Options = require("hotswitch-hs/lib/common/Options")
 
 local mainController = MainController.new()
 
@@ -26,6 +27,7 @@ return {
     clearSettings = function() mainController:clearSettings() end,
     clearPreferences = function() PreferenceModel.clearPreferences() end,
     addKeyModifier = function() mainController:addKeyModifier() end,
+    setOptions = function(values) Options.apply(values) end,
     setLogLevel = function(logLevel)
         mainController:setLogLevel(logLevel)
     end,
